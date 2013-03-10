@@ -42,27 +42,44 @@ def mrect(cnt):
     return cv2.minAreaRect(cnt)
 
 def draw_mrect(im,rect,c,t):
+    
     box = cv2.cv.BoxPoints(rect)
     box = numpy.int0(box)
     cv2.drawContours(im,[box],0,c,t)
     
 def brect(cnt):
+    #cnt = contour to bound
+    #returns a right bound rectangle
     return cv2.boundingRect(cnt)
 
 def draw_brect(im,rect,c,t):
+    #im = image to draw ell onto
+    #rect= the bounded rectangle
+    #c = color to draw
+    #t  = thickness of the line to draw
+    #side effect: draws on the window
     x,y,w,h = rect
     cv2.rectangle(im,(x,y),(x+w,y+h),c,t)
 
 def bcircle(cnt):
+    #cnt = contour
+    #returns the tuple (x,y) r which is a
+    #point, radius circle form
     (x,y),r = cv2.minEnclosingCircle(cnt)
     return (x,y,r)
 
 def draw_bcircle(im,cir,c,t):
+    #im = image to draw ell onto
+    #cir= the circle to draw(x,y),r
+    #c = color to draw
+    #t  = thickness of the line to draw
+    #side effect: draws on the window
     x,y,r = int(cir[0]),int(cir[1]),int(cir[2])
     cv2.circle(im,(x,y),r,c,t)
 
 def bellipse(cnt):
     #cnt = one contour, need 5 or more points
+    #returns the rectangle that the ellipse fits to (x,y),(w,h),o
     return cv2.fitEllipse(cnt)
 
 def draw_bellipse(im,ell,c,t):
@@ -70,47 +87,76 @@ def draw_bellipse(im,ell,c,t):
     #ell= the elipse to draw (x,y,axes,O,startO,EndO)
     #c  = the color to draw
     #t  = thickness of the line to draw
+    #side effect: draws on the window
     cv2.ellipse(im, ell, c, t)
 
 def chull(cnt):
+    #cnt = one contour
+    #computes the convex hull of the contour
     return cv2.convexHull(cnt)
 
 #def cdefects(hull):
+    #to do...
 
 def aspect(rect):
+    #rect = a minimum area rectangle
+    #returns the apect ratio of the rect, saturating
+    #under a divide by zero condition
     (x,y),(w,h),o = rect
     if h <= 0: return sys.float_info.max #saturated div by 0
     else: return w/float(h)
 
 def similiar_aspect(r1,r2,a):
+    #r1 = aspect ratio #1 should be the template or control
+    #r2 = aspect ratio #2 should be the test
+    #returns a boolean condition, used as a binary aspect filter
     if aspect_diff(r1,r2) < a : return True
     else: return False
 
 def aspect_diff(r1,r2):
+    #r1 = aspect ratio #1 should be the template or control
+    #r2 = aspect ratio #2 should be the test
+    #returns the minimum absolute difference bewteen the standard
+    #ratios and the 90 degree (w h) swapped set of ratios
     d1 = abs(r1-float(r2))
     d2 = abs(r1-(1/float(r2)))
     return min(d1,d2)
 
 def aspect_dist(r1,r2):
+    #r1 = aspect ratio #1 should be the template or control
+    #r2 = aspect ratio #2 should be the test
+    #returns the minimum geometric distance between the ratios
+    #and a 90 degree rotated (w h swapped) set of ratios
     D1 = numpy.sqrt(pow(r1-float(r2)))
     D2 = numpy.sqrt(pow(r1-(1/float(r2)),2))
     return min(D1,D2)
 
 def extent(area,rect):
+    #area = contour area of the shape
+    #rect = a minimum area rectangle
+    #returns the ratio of the contour area over
+    #the minimum rect area (so it measures rectangularity)
     (x,y),(w,h),o = rect
     if h <= 0: return sys.float_info.max #saturated div by 0
     else: return area/float(w*h)
 
 def solidity(area,hull):
+    #area = contour area of a shape
+    #hull = the convex hull calculation from chull
+    #returns a ratio that basically describes how solid an
+    #object apears, a fork versus a spoon
     if hull <= 0: return sys.float_info.max #saturated div by 0
     else:
         hull_area = cv2.contourArea(hull)
         return area/float(hull_area)
 
 def eql_diameter(area):
+    #returns the diameter of a circle that
+    #is equal to the contour area of a shape
     return numpy.sqrt(4*area/numpy.pi)
 
 def orientation(rect):
+    #rect is a minimum area rectangle
     (x,y),(w,h),o = rect
     return o
 
@@ -160,7 +206,11 @@ def filter_by_area(cont,thr):
 def filter_by_apsect(cont,t_asp,thr):
     x = []
     for i in range(0,len(cont)):
-        asp = 
+        rect = mrect(cont[i])
+        asp = aspect(rect)
+        if apect_diff(asp,t_asp) < thr:
+            x.append(i)
+    return map(lambda z:cont[z],x)
 
 
     
