@@ -38,11 +38,15 @@ def draw_point(im,(x,y),c,t):
     cv2.circle(im,(int(x),int(y)),1,c,t)
 
 def mrect(cnt):
-    #cnt =
+    #cnt =the contour to find the minimum area bounding rectangle
+    #this calculation incorporates a rational angle: theta
     return cv2.minAreaRect(cnt)
 
 def draw_mrect(im,rect,c,t):
-    
+    #im - image to draw rectangle on
+    #rect (x,y),(w,h),o rectangle with angle
+    #c = color to draw
+    #t = line thickness
     box = cv2.cv.BoxPoints(rect)
     box = numpy.int0(box)
     cv2.drawContours(im,[box],0,c,t)
@@ -97,6 +101,16 @@ def chull(cnt):
 
 #def cdefects(hull):
     #to do...
+
+def min_max_pts(cnt):
+    #cnt = a contour
+    #returns the minimal and maximal points L,R,U,D
+    L = tuple(cnt[cnt[:,:,0].argmin()][0])
+    R = tuple(cnt[cnt[:,:,0].argmax()][0])
+    U = tuple(cnt[cnt[:,:,1].argmin()][0])
+    D = tuple(cnt[cnt[:,:,1].argmax()][0])
+    return L,R,U,D
+    
 
 def aspect(rect):
     #rect = a minimum area rectangle
@@ -180,15 +194,19 @@ def arc_len(cnt):
 
 def centroid(M):
     #take the contour moments M and return the center point (x,y)
-    #prevents a divide by zero by drawing the point at (-1,-1)
+    #prevents a divide by zero by drawing the point at the max float
     #which will be off the image space and not viewable
     d = M['m00']
     if(d > 0):
         return M['m10']/d,M['m01']/d
-    else:
-        return -1,-1
+    else: 
+        return sys.float_info.max,sys.float_info.max
 
 def match(cnt1, cnt2, mode=3):
+    #threshold distance based matching via Humoments
+    #cnt1 = the train countour set you want to match to
+    #cnt2 = the test contour to match to cnt1
+    #mode = the various modes employ alternate algorithms if desired
     if mode==1:
         return cv2.matchShapes(cnt1,cnt2,cv.CV_CONTOURS_MATCH_I1,0) 
     elif mode==2:
@@ -197,6 +215,9 @@ def match(cnt1, cnt2, mode=3):
         return cv2.matchShapes(cnt1,cnt2,cv.CV_CONTOURS_MATCH_I3,0)
 
 def filter_by_area(cont,thr):
+    #cont = a set of contours (list)
+    #thr = a value used for minimum pixel area
+    #returns only the contours that exeed the thr value
     x = []
     for i in range(0,len(cont)):
         a = area(cont[i])
@@ -204,6 +225,14 @@ def filter_by_area(cont,thr):
     return map(lambda z:cont[z],x)
 
 def filter_by_apsect(cont,t_asp,thr):
+    #cont = a set of contours (list)
+    #t_asp = the minimum rectangle aspect ratio from the test shape
+    #thr = the proximity to t_asp that the contours in the list must
+    #satisfy. This provides a small measure of robustness to handle
+    #shapes that are slightly occluded
+    #returns only those shapes whose minimum rectangle aspect ratios
+    #are within the thr value (also tests the rated version to allow
+    #for aspect ratio tests where L & W are swapped)
     x = []
     for i in range(0,len(cont)):
         rect = mrect(cont[i])
