@@ -97,10 +97,13 @@ def draw_bellipse(im,ell,c,t):
 def chull(cnt):
     #cnt = one contour
     #computes the convex hull of the contour
-    return cv2.convexHull(cnt)
+    return cv.convexHull2(cnt,orientation=cv.CV_CLOCKWISE,
+                          returnPoints=0)
 
-#def cdefects(hull):
+def cdefects(cnt,hull):
     #to do...
+    return cv.ConvexityDefects(cnt,hull)
+    
 
 def min_max_pts(cnt):
     #cnt = a contour

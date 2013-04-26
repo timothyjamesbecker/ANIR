@@ -68,12 +68,13 @@ while RT and (frame < n): #Real-Time Loop=> 'esc' key turns off
     #process each contour set in the list cont:
     for i in range(0,len(cont)):
         #[5]-----shape_processing---------------[5]
-        rect = shapes.mrect(cont[i]) #get a mrect
-        asp  = shapes.aspect(rect)   #get aspect of mrect
-        M = shapes.moments(cont[i])  #contour moments
-        #CH = shapes.chull(cont[0])  #convex hull
-        #H = shapes.hu_moments(M)    #Hu moments
-        x,y = shapes.centroid(M)     #centroid calculation
+        rect = shapes.mrect(cont[i])    #get a mrect
+        asp  = shapes.aspect(rect)      #get aspect of mrect
+        M = shapes.moments(cont[i])     #contour moments
+        CH = shapes.chull(cont[i])      #convex hull
+        CHD= shapes.cdefects(cont[i],CH)#convexity defects
+        #H = shapes.hu_moments(M)       #Hu moments
+        x,y = shapes.centroid(M)        #centroid calc
         value = shapes.match(cont[i],cont[i])
         #[7]-----draw-shapes--------------------[7]
         shapes.draw_mrect(im3,rect,blue,2)
