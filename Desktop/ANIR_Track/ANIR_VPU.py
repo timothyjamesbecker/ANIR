@@ -66,25 +66,10 @@ while RT and (frame < n): #Real-Time Loop=> 'esc' key turns off
     cont,hier = shapes.contours(im2) #im2 is the main input
     im3 = filters.white(filters.color(im)) #white color const
     #[2]-----contour filtering-------------------[2]
-    if len(cont) > 20: cont = cont[1:20]   #set max number of cont
-    cont = shapes.filter_by_area(cont,20)  #remove small area shapes
-    #[2]-----process each contour----------------[2]
-    for i in range(0,len(cont)):
-        #[2]-----shape descriptors---------------[2]
-        rect= shapes.mrect(cont[i])    #get a mrect
-        #ell = shapes.bellipse(cont[i]) #get an ellipse
-        asp = shapes.aspect(rect)      #get aspect of mrect
-        m   = shapes.moments(cont[i])  #contour moments
-        #minmax = shapes.min_max_pts(cont[i])
-        #H = shapes.hu_moments(m)       #Hu moments
-        x,y = shapes.centroid(m)        #centroid calc
-        value = shapes.match(cont[i],cont[i])
-        #line  = shapes.pair_angle((x,y),0,(x+10,y+10),0)
-        shapes.draw_line(im3,(x,y),(x+50,y+50),red,1)
-        #[2]-----draw-shapes--------------------[2]
-        shapes.draw_mrect(im3,rect,blue,2) #min rect
-        shapes.draw_point(im3,(x,y),red,5) #centroids
-        
+    #cont = shapes.filter_by_area(cont,4) #remove small area shapes    #[2]-----process each contour----------------[2]
+    #[3]-----find best shapes--------------------[3]
+    descriptors = shapes.MLE_descriptors(cont,train_c)
+    
     shapes.draw_contours(im3,cont,green,2)
     #compute loop:::::::::::::::::::::::::::::::::::::::::::
 

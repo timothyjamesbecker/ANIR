@@ -232,17 +232,17 @@ def match(cnt1, cnt2, mode=3):
     else:
         return cv2.matchShapes(cnt1,cnt2,cv.CV_CONTOURS_MATCH_I3,0)
 
-def filter_by_area(cont,thr):
+def filter_by_area(cont,n):
     #cont = a set of contours (list)
     #thr = a value used for minimum pixel area
     #returns only the contours that exeed the thr value
-    x = []
-    for i in range(0,len(cont)):
-        a = area(cont[i])
-        if area > thr: x.append(i)
+    d = numpy.zeros(len(cont))
+    for i in range(0,len(cont)): d[i] = area(cont[i])
+    x = list(d.argsort().argsort()[::-1]) #rank greatest area
+    x = x[0:n]
     return map(lambda z:cont[z],x)
 
-def filter_by_apsect(cont,t_asp,thr):
+def filter_by_apsect(cont,t_asp,n):
     #cont = a set of contours (list)
     #t_asp = the minimum rectangle aspect ratio from the test shape
     #thr = the proximity to t_asp that the contours in the list must
@@ -251,33 +251,34 @@ def filter_by_apsect(cont,t_asp,thr):
     #returns only those shapes whose minimum rectangle aspect ratios
     #are within the thr value (also tests the rated version to allow
     #for aspect ratio tests where L & W are swapped)
-    x = []
+    d = numpy.zeros(len(cont))
     for i in range(0,len(cont)):
         rect = mrect(cont[i])
-        asp = aspect(rect)
-        if apect_diff(asp,t_asp) < thr:
-            x.append(i)
+        d[i] = apect_diff(aspect(rect),t_asp)
+    x = list(d.argsort().argsort()[::-1]) #rank by closest match
+    x = x[0:n]
     return map(lambda z:cont[z],x)
 
-def get_descriptor(test_cont,train_cont):
+def MLE_descriptors(test_cont,train_cont):
     #get closest matches for the pair
     sim1,sim2 = sys.float_info.max,sys.float_info.max
     i1,i2 = 0,0 #indecies of the best matches
-    for i in range(0,len(cont)):
-        t1 = match(train_cont[1],test_cont[i])
-        t2 = match(train_cont[2],test_cont[i])
+    for i in range(0,len(test_cont)):
+        t1 = match(train_cont[0],test_cont[i])
+        t2 = match(train_cont[1],test_cont[i])
         if(t1 < sim1): sim1,i1 = t1,i
         if(t2 < sim2): sim2,i2 = t2,i
+    #print(i1,i2)
     #use threshold to limit attachment
-    m1   = moments(test_cont[i1])#contour moments
-    m2   = moments(test_cont[i2])#contour moments
-    x1,y1 = centroid(m1)         #centroid calc
-    x2,y2 = centroid(m2)         #centroid calc
-    rect1 = mrect(test_cont[i1]) #get a mrect
-    rect2 = mrect(test_cont[i2]) #get a mrect
-    d     = numpy.sqrt(numpy.power(x1-x2,2)+numpy.power(y1-y2,2))
-    o     = numpy.arctan((y1-y2)/(x2-x1)*180/numpy.pi)
-    return [d,o,(x1,y1),(x2,y2),rect1,rect2]
+    #m1   = moments(test_cont[i1])#contour moments
+    #m2   = moments(test_cont[i2])#contour moments
+    #x1,y1 = centroid(m1)         #centroid calc
+    #x2,y2 = centroid(m2)         #centroid calc
+    #rect1 = mrect(test_cont[i1]) #get a mrect
+    #rect2 = mrect(test_cont[i2]) #get a mrect
+    #d     = numpy.sqrt(numpy.power(x1-x2,2)+numpy.power(y1-y2,2))
+    #o     = numpy.arctan((y1-y2)/(x2-x1)*180/numpy.pi)
+    #return [d,o,(x1,y1),(x2,y2),rect1,rect2]
     
          
     
