@@ -15,6 +15,10 @@ def approx_poly(cnt,e):
     #returns an approximation of cnt
     return cv2.approxPolyDP(cnt,e*arc_len(cnt),True)
 
+def draw_poly(im,poly,c,t):
+    #poly = a set of polygonal points
+    cv2.drawContours(im,[poly],0,c,t)
+
 def draw_contours(im,cont,c,t):
     #im = the output image to be drawn onto
     #cont = a set of contours, can print out specific ones
@@ -94,17 +98,24 @@ def draw_bellipse(im,ell,c,t):
     #side effect: draws on the window
     cv2.ellipse(im, ell, c, t)
 
+def draw_line(im,pt1,pt2,c,t):
+    #fit a line through the ell
+    x1,y1 = pt1
+    x2,y2 = pt2
+    cv2.line(im,(int(x1),int(y1)),(int(x2),int(y2)),c,t)
+
 def chull(cnt):
     #cnt = one contour
     #computes the convex hull of the contour
-    return cv.convexHull2(cnt,orientation=cv.CV_CLOCKWISE,
-                          returnPoints=0)
+    return cv2.convexHull(cnt,returnPoints=False)
 
-def cdefects(cnt,hull):
-    #to do...
-    return cv.ConvexityDefects(cnt,hull)
+def cdefects(cnt,hull,storage):
+    #cnt = the contour in question
+    #hull = the convex hull of cnt
+    #returns the points on shape cnt that are maximally
+    #distant to the convex hull. This is basically the indents
+    return cv.ConvexityDefects(cnt,hull,storage)
     
-
 def min_max_pts(cnt):
     #cnt = a contour
     #returns the minimal and maximal points L,R,U,D
@@ -112,9 +123,8 @@ def min_max_pts(cnt):
     R = tuple(cnt[cnt[:,:,0].argmax()][0])
     U = tuple(cnt[cnt[:,:,1].argmin()][0])
     D = tuple(cnt[cnt[:,:,1].argmax()][0])
-    return L,R,U,D
+    return [L,R,U,D]
     
-
 def aspect(rect):
     #rect = a minimum area rectangle
     #returns the apect ratio of the rect, saturating
@@ -203,7 +213,12 @@ def centroid(M):
     if(d > 0):
         return M['m10']/d,M['m01']/d
     else: 
-        return sys.float_info.max,sys.float_info.max
+        return -1,-1
+
+#def pair_angle(C1,C2):
+    #C1 = centroid of first point
+    #C2 = centroid of second point
+
 
 def match(cnt1, cnt2, mode=3):
     #threshold distance based matching via Humoments
@@ -244,8 +259,27 @@ def filter_by_apsect(cont,t_asp,thr):
             x.append(i)
     return map(lambda z:cont[z],x)
 
-
+def get_descriptor(test_cont,train_cont):
+    #get closest matches for the pair
+    sim1,sim2 = sys.float_info.max,sys.float_info.max
+    i1,i2 = 0,0 #indecies of the best matches
+    for i in range(0,len(cont)):
+        t1 = match(train_cont[1],test_cont[i])
+        t2 = match(train_cont[2],test_cont[i])
+        if(t1 < sim1): sim1,i1 = t1,i
+        if(t2 < sim2): sim2,i2 = t2,i
+    #use threshold to limit attachment
+    m1   = moments(test_cont[i1])#contour moments
+    m2   = moments(test_cont[i2])#contour moments
+    x1,y1 = centroid(m1)         #centroid calc
+    x2,y2 = centroid(m2)         #centroid calc
+    rect1 = mrect(test_cont[i1]) #get a mrect
+    rect2 = mrect(test_cont[i2]) #get a mrect
+    d     = numpy.sqrt(numpy.power(x1-x2,2)+numpy.power(y1-y2,2))
+    o     = numpy.arctan((y1-y2)/(x2-x1)*180/numpy.pi)
+    return [d,o,(x1,y1),(x2,y2),rect1,rect2]
     
+         
     
 
 

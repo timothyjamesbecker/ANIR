@@ -5,6 +5,16 @@ def gs(im):
     #return an 8-bit greyscale matrix
     return cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
 
+def rot(im,theta):
+    #rotate an image by theta degrees
+    center = tuple(numpy.array(im.shape)/2)
+    rot = cv2.getRotationMatrix2D(center,theta,1.0)
+    return cv2.warpAffine(im,rot,im.shape,flags=cv2.INTER_LINEAR)
+
+def flip(im,mode):
+    #flip horizontal or verticle
+    return cv2.flip(im,flipCode=mode)
+
 def color(im):
     #return an 8*3-bit color matrix from a 8-bit greyscale
     return cv2.cvtColor(im, cv2.COLOR_GRAY2BGR)

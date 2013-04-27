@@ -48,6 +48,7 @@ source.win_start('video_input')
 source.vin(640,480,'')  #leaving the path = '' sets to webcam
 n, m = 1,10 #n=number of max frames, m= a divsor for output
 RT,frame,value,asp = True,0,0,0
+
 while RT and (frame < n): #Real-Time Loop=> 'esc' key turns off
     p.start()#----------------performance start---CPU
 
@@ -55,36 +56,41 @@ while RT and (frame < n): #Real-Time Loop=> 'esc' key turns off
     im = source.read() #get one frame
     #[1]-----gray scale conversion--------------[1]
     im  = filters.gs(im)
-    imc = filters.color(im)
-    #[2]-----thresholding-----------------------[2]
+    imc = filters.color(im) #used to colors 
+    #[1]-----thresholding-----------------------[1]
     im2 = filters.thresh(im,220,255)
-    #[3]-----smoothing--------------------------[3]
+    #[1]-----smoothing--------------------------[1]
     im2 = filters.blur(im2,5)
-    #[4]-----shape collection-------------------[4]
+    #[2]-----shape collection-------------------[2]
     im4 = im2.copy() #make a deep copy=>cont is destructive
     cont,hier = shapes.contours(im2) #im2 is the main input
     im3 = filters.white(filters.color(im)) #white color const
+    #[2]-----contour filtering-------------------[2]
+    if len(cont) > 20: cont = cont[1:20]   #set max number of cont
     cont = shapes.filter_by_area(cont,20)  #remove small area shapes
-    #process each contour set in the list cont:
+    #[2]-----process each contour----------------[2]
     for i in range(0,len(cont)):
-        #[5]-----shape_processing---------------[5]
-        rect = shapes.mrect(cont[i])    #get a mrect
-        asp  = shapes.aspect(rect)      #get aspect of mrect
-        M = shapes.moments(cont[i])     #contour moments
-        CH = shapes.chull(cont[i])      #convex hull
-        CHD= shapes.cdefects(cont[i],CH)#convexity defects
-        #H = shapes.hu_moments(M)       #Hu moments
-        x,y = shapes.centroid(M)        #centroid calc
+        #[2]-----shape descriptors---------------[2]
+        rect= shapes.mrect(cont[i])    #get a mrect
+        #ell = shapes.bellipse(cont[i]) #get an ellipse
+        asp = shapes.aspect(rect)      #get aspect of mrect
+        m   = shapes.moments(cont[i])  #contour moments
+        #minmax = shapes.min_max_pts(cont[i])
+        #H = shapes.hu_moments(m)       #Hu moments
+        x,y = shapes.centroid(m)        #centroid calc
         value = shapes.match(cont[i],cont[i])
-        #[7]-----draw-shapes--------------------[7]
-        shapes.draw_mrect(im3,rect,blue,2)
-        shapes.draw_point(im3,(x,y),red,5)
+        #line  = shapes.pair_angle((x,y),0,(x+10,y+10),0)
+        shapes.draw_line(im3,(x,y),(x+50,y+50),red,1)
+        #[2]-----draw-shapes--------------------[2]
+        shapes.draw_mrect(im3,rect,blue,2) #min rect
+        shapes.draw_point(im3,(x,y),red,5) #centroids
         
     shapes.draw_contours(im3,cont,green,2)
     #compute loop:::::::::::::::::::::::::::::::::::::::::::
 
     p.stop()#--------------------performance end---CPU
     #[n]-----diagnostic-text--------------------[n]
+    im3 = filters.flip(im3,1) #mirror image
     source.win_diag(im3,frame,p.diff(),len(cont))
     source.win_message(im3,str(asp))
 
@@ -92,17 +98,17 @@ while RT and (frame < n): #Real-Time Loop=> 'esc' key turns off
     k = cv2.waitKey(30)           #wait period
     if k == KEY_ESC: break        #'esc' key exit
     if k == KEY_1:                #'1' key save to shape1
-        source.write(im4,test_s)
+        source.write(im4,train_s)
         source.win_message(im3,'Shape 1 Written')
     if k == KEY_2:                #'2' key save to shape1
-        source.write(im4,test_s)
+        source.write(im4,train_s)
         source.win_message(im3,'Shape 2 Written')
     if k == KEY_3:                #'3' key save to shape1
-        source.write(im4,test_s)
+        source.write(im4,train_s)
         source.win_message(im3,'Shape 3 Written')
         
     source.win_print('video_input',im3) #display output
     frame+=1 #update the frame counter (for video only)
     if(source.mode == 0): n+=1    #take out frame + n for video
     
-source.win_stop('video_input',1) #close up window thread pause 1 sec
+source.win_stop('video_input',1) #close up window thread, pause 1 sec

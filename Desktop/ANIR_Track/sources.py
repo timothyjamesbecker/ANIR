@@ -26,7 +26,7 @@ class Sources:
 
     def win_message(self,im,t):
         #output a temp message
-        cv2.putText(im,t,(10,90),self.f_type,1,0,1,1)
+        cv2.putText(im,t,(10,90),self.f_type,0.5,0,1,1)
 
     def win_stop(self,name,hold):
         #closes the capture device, stops threads and then window
