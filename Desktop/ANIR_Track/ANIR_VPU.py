@@ -14,6 +14,7 @@ import os
 import sources #windowing and video utils
 import filters #modifiers
 import shapes  #shape processing/masking
+import tracker #tracking and smoothing
 import perform #performance measures
 
 #base colors
@@ -33,9 +34,8 @@ vin_f = 'Direct_IR950_2x4_TRI.mov' #training video
 
 #new video source object (makes windows, opens videos, camera,ect)
 source = sources.Sources()
-train_s = train+'shape1.jpg'   #shape you want to match
-train_i = source.load(train_s) #load it as an image
-train_c,train_h = shapes.contours(train_i) #get the image contours
+train_i = source.load(train+'shape1.jpg') #load as GS image
+train_c = shapes.contours(train_i)#get the image contours
 
 #new performance CPU measurement object
 p = perform.CPU()
@@ -44,10 +44,13 @@ p = perform.CPU()
 source.win_start('video_input')
 
 #captures video files or default webcam = 0
-#source.vin()   #open camera
 source.vin(640,480,'')  #leaving the path = '' sets to webcam
 n, m = 1,10 #n=number of max frames, m= a divsor for output
-RT,frame,value,asp = True,0,0,0
+RT,frame,values,asp = True,0,0,0
+
+#kalman filter on (x,y) point ****************************
+target = tracker.Tracker(0.0,0.0) #initialize to point (0,0)
+#kalman filter on (x,y) point ****************************
 
 while RT and (frame < n): #Real-Time Loop=> 'esc' key turns off
     p.start()#----------------performance start---CPU
@@ -63,37 +66,47 @@ while RT and (frame < n): #Real-Time Loop=> 'esc' key turns off
     im2 = filters.blur(im2,5)
     #[2]-----shape collection-------------------[2]
     im4 = im2.copy() #make a deep copy=>cont is destructive
-    cont,hier = shapes.contours(im2) #im2 is the main input
+    cont = shapes.contours(im2) #im2 destroyed now use im4
     im3 = filters.white(filters.color(im)) #white color const
     #[2]-----contour filtering-------------------[2]
-    #cont = shapes.filter_by_area(cont,4) #remove small area shapes    #[2]-----process each contour----------------[2]
+    cont = shapes.filter_by_area(cont,1000) #remove small shapes
     #[3]-----find best shapes--------------------[3]
-    descriptors = shapes.MLE_descriptors(cont,train_c)
-    
-    shapes.draw_contours(im3,cont,green,2)
+    s_f = shapes.features(train_c,cont,0.1);
+    shapes.draw_contours(im3,cont,green,2) #all contours
+    #[4]-----kalman-filter-----------------------[4]
+    target.set_KF(s_f[2][0],s_f[2][1])
+    p_1 = target.predict_KF()
+    px,py = int(p_1[0]),int(p_1[0])
+    target.correct_KF()
+    target.update_KF(s_f[2][0],s_f[2][1])
+    #[4]-----kalman-filter-----------------------[4]
+    shapes.draw_point(im3,(px,py),red,2) #centroids of matched
+    shapes.draw_point(im3,s_f[3],red,2) #centroids of matched
+    values = s_f[0],s_f[1]
     #compute loop:::::::::::::::::::::::::::::::::::::::::::
 
     p.stop()#--------------------performance end---CPU
     #[n]-----diagnostic-text--------------------[n]
     im3 = filters.flip(im3,1) #mirror image
     source.win_diag(im3,frame,p.diff(),len(cont))
-    source.win_message(im3,str(asp))
+    source.win_message(im3,str(values))
 
-    #Sentel Loop Control Logic
+    #Sentel Loop Control Logic============================
     k = cv2.waitKey(30)           #wait period
     if k == KEY_ESC: break        #'esc' key exit
     if k == KEY_1:                #'1' key save to shape1
-        source.write(im4,train_s)
+        source.write(im4,train+'shape1.jpg')
         source.win_message(im3,'Shape 1 Written')
     if k == KEY_2:                #'2' key save to shape1
-        source.write(im4,train_s)
+        source.write(im4,train+'shape2.jpg')
         source.win_message(im3,'Shape 2 Written')
     if k == KEY_3:                #'3' key save to shape1
-        source.write(im4,train_s)
+        source.write(im4,train+'shape2.jpg')
         source.win_message(im3,'Shape 3 Written')
         
     source.win_print('video_input',im3) #display output
     frame+=1 #update the frame counter (for video only)
     if(source.mode == 0): n+=1    #take out frame + n for video
+    #Sentel Loop Control Logic============================
     
 source.win_stop('video_input',1) #close up window thread, pause 1 sec

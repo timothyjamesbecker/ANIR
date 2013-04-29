@@ -7,8 +7,10 @@ def contours(im):
     #items you want should be white with background in black
     #im = image to find contours
     #returns a list of contours (lists)
-    return cv2.findContours(im,cv2.RETR_TREE,
+    cont, heir = cv2.findContours(im,cv2.RETR_TREE,
                             cv2.CHAIN_APPROX_SIMPLE)
+    return cont
+
 def approx_poly(cnt,e):
     #cnt = an input contour
     #e = percentage value of arc length used to define approximation
@@ -215,11 +217,6 @@ def centroid(M):
     else: 
         return -1,-1
 
-#def pair_angle(C1,C2):
-    #C1 = centroid of first point
-    #C2 = centroid of second point
-
-
 def match(cnt1, cnt2, mode=3):
     #threshold distance based matching via Humoments
     #cnt1 = the train countour set you want to match to
@@ -236,11 +233,10 @@ def filter_by_area(cont,n):
     #cont = a set of contours (list)
     #thr = a value used for minimum pixel area
     #returns only the contours that exeed the thr value
-    d = numpy.zeros(len(cont))
-    for i in range(0,len(cont)): d[i] = area(cont[i])
-    x = list(d.argsort().argsort()[::-1]) #rank greatest area
-    x = x[0:n]
-    return map(lambda z:cont[z],x)
+    d = []
+    for i in range(0,len(cont)):
+        if area(cont[i])>n: d.append(cont[i])
+    return d
 
 def filter_by_apsect(cont,t_asp,n):
     #cont = a set of contours (list)
@@ -259,28 +255,28 @@ def filter_by_apsect(cont,t_asp,n):
     x = x[0:n]
     return map(lambda z:cont[z],x)
 
-def MLE_descriptors(test_cont,train_cont):
+def features(train_cont,test_cont,alpha):
     #get closest matches for the pair
-    sim1,sim2 = sys.float_info.max,sys.float_info.max
-    i1,i2 = 0,0 #indecies of the best matches
+    sim1,sim2 = alpha,alpha #implicit threshold values
+    i1,i2 = -1,-1 #indecies of the best matches
     for i in range(0,len(test_cont)):
         t1 = match(train_cont[0],test_cont[i])
         t2 = match(train_cont[1],test_cont[i])
         if(t1 < sim1): sim1,i1 = t1,i
         if(t2 < sim2): sim2,i2 = t2,i
-    #print(i1,i2)
-    #use threshold to limit attachment
-    #m1   = moments(test_cont[i1])#contour moments
-    #m2   = moments(test_cont[i2])#contour moments
-    #x1,y1 = centroid(m1)         #centroid calc
-    #x2,y2 = centroid(m2)         #centroid calc
-    #rect1 = mrect(test_cont[i1]) #get a mrect
-    #rect2 = mrect(test_cont[i2]) #get a mrect
-    #d     = numpy.sqrt(numpy.power(x1-x2,2)+numpy.power(y1-y2,2))
-    #o     = numpy.arctan((y1-y2)/(x2-x1)*180/numpy.pi)
-    #return [d,o,(x1,y1),(x2,y2),rect1,rect2]
-    
-         
+    #check the matches before calc features
+    if   i1 >= 0 and i2 >= 0:
+        m1   = moments(test_cont[i1])#contour moments
+        m2   = moments(test_cont[i2])#contour moments
+        x1,y1 = centroid(m1)         #centroid calc
+        x2,y2 = centroid(m2)         #centroid calc
+        a1    = area(test_cont[i1])  #area should be prop to d
+        a2    = area(test_cont[i2])  #area should be prop to d
+        d     = numpy.sqrt(numpy.power(x1-x2,2)+numpy.power(y1-y2,2))
+        o     = numpy.arctan((y2-y1)/(x2-x1))*180/numpy.pi
+        return [d,o,(x1,y1),(x2,y2),a1,a2] #gives back features
+    else:
+        return [0,0,(0,0),(0,0),0,0]         
     
 
 

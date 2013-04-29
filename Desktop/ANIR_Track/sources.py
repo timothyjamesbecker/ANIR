@@ -62,7 +62,10 @@ class Sources:
 
     def load(self,path):
         #reads in a picture as a image
-        return cv2.imread(path,cv2.CV_LOAD_IMAGE_GRAYSCALE)
+        im = cv2.imread(path)
+        img = filters.gs(im)
+        return filters.thresh(img,200,255)
+        
     
     def write(self,im,path):
         #used to save images as picture files
