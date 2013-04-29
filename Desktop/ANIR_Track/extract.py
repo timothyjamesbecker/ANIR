@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 import cv
 import sys
+import math
 
 """
   Function Name:  getContours
@@ -94,6 +95,22 @@ def findSymbolApprox( contour, accuracy ):
     
     return approx
 
+def compareTransMatrix( trans1, trans2, accuracy ):
+    comparison = trans1 - trans2
+    if comparison[0][0] > accuracy:
+        return False
+    if comparison[0][1] > accuracy:
+        return False
+    if comparison[1][0] > accuracy:
+        return False
+    if comparison[1][1] > accuracy:
+        return False
+    else:
+        return True
+    
+
+    
+
     """ The following code could be used to extract the approximation of many contours
         and visualize the results.
 
@@ -110,7 +127,7 @@ def findSymbolApprox( contour, accuracy ):
 # The below code will allow for direct testing of the functions contained in this file
 # this should be replaced with a unit test.
 
-"""
+
 if len(sys.argv) < 3:
     print 'usage %s template imgToSearch' % sys.argv[0]
     sys.exit(1)
@@ -121,17 +138,58 @@ imgToSearch      = sys.argv[2]
 colorTemplate    = cv2.imread( template_path )
 colorSearch      = cv2.imread( imgToSearch )
 
-templates = getContours( colorTemplate )
-srchSpace = getContours( colorSearch )
+templates        = getContours( colorTemplate )
+srchSpace        = getContours( colorSearch )
 
-left, right = filterByContours( templates, srchSpace, 0.1 )
-leftApprox  = findSymbolApprox( left[0], 0.1 )
-rightApprox = findSymbolApprox( right[0], 0.1 )
+left, right      = filterByContours( templates, srchSpace, 0.1 )
 
-print len( leftApprox )
-print len( findSymbolApprox( templates[0], 0.1 ) )
+leftApproxList   = list()
+rightApproxList  = list()
 
-temp = findSymbolApprox( templates[0], 0.1 ) 
+for cont in left:
+    leftApproxList.append( findSymbolApprox( cont, 0.1 ) )
 
-print cv2.estimateRigidTransform( temp, leftApprox, False )
-"""
+for cnt in right:
+    rightApproxList.append( findSymbolApprox( cnt, 0.1 ) )
+
+temp             = findSymbolApprox( templates[1], 0.1 ) 
+temp2            = findSymbolApprox( templates[0], 0.1 )
+
+leftTransMatrices = list()
+rightTransMatrices = list()
+
+for approx in rightApproxList:
+    print  approx
+    print  cv2.estimateRigidTransform( temp, approx, True ) 
+    rightTransMatrices.append ( cv2.estimateRigidTransform( temp, approx, True ) )
+
+for approx in leftApproxList:
+    print  approx
+    print  cv2.estimateRigidTransform( temp2, approx, True ) 
+    leftTransMatrices.append ( cv2.estimateRigidTransform( temp2, approx, True ) )
+
+symbolPair = list()
+
+for lApprox in leftApproxList:
+    leftTransformMatrix = cv2.estimateRigidTransform( temp2, lApprox, True )
+
+    for rApprox in rightApproxList:
+        rightTransformMatrix = cv2.estimateRigidTransform( temp, rApprox, True )
+        
+        if compareTransMatrix( leftTransformMatrix, rightTransformMatrix, 0.05 ):
+            symbolPair = [lApprox, rApprox]
+            break
+        else:
+            print "Invalid Pair"
+
+if len(symbolPair) > 0:
+    print symbolPair
+    cv2.drawContours( colorSearch, symbolPair, -1, (0,255,0), 4)
+    cv2.imshow( 'contours', colorSearch )
+    cv2.waitKey(0)
+
+    print leftTransMatrices[0] - rightTransMatrices[0]
+    print compareTransMatrix( leftTransMatrices[0], rightTransMatrices[0], 0.05 )
+
+else:
+    print "No symbol pair found"
