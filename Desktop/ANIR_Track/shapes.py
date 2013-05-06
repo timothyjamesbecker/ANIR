@@ -265,6 +265,7 @@ def features(train_cont,test_cont,alpha):
         if(t1 < sim1): sim1,i1 = t1,i
         if(t2 < sim2): sim2,i2 = t2,i
     #check the matches before calc features
+    #saves some cycles under conditions of 0-1 match
     if   i1 >= 0 and i2 >= 0:
         m1   = moments(test_cont[i1])#contour moments
         m2   = moments(test_cont[i2])#contour moments

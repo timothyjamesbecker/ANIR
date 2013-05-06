@@ -15,6 +15,7 @@ class Tracker:
     kalman_measurement = cv.CreateMat(2, 1, cv.CV_32FC1)
 
     def __init__(self,x,y):
+        #basic setup here
         self.state_pt[0] = numpy.float32(x)
         self.state_pt[1] = numpy.float32(y)
         self.predict_pt[0] = 0.0

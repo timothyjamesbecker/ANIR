@@ -29,7 +29,7 @@ KEY_ESC,KEY_1,KEY_2,KEY_3 = 27,49,50,51
 path  = '/home/opencv/Desktop/ANIR_Track/' #project path
 train = path+'Train/' 
 out_f = 'OpenCV_Test.mov' #output stream to make demos with
-vin_f = 'Direct_IR950_2x4_TRI.mov' #training video
+vin_f = 'Direct_IR950_2x4_TRI.mov' #training video, will update
 #this section will be changed to work with args############
 
 #new video source object (makes windows, opens videos, camera,ect)
