@@ -50,9 +50,9 @@ class Tracker:
         cv.SetIdentity(self.kalman.measurement_matrix,
                        cv.RealScalar(1))
         cv.SetIdentity(self.kalman.process_noise_cov,
-                       cv.RealScalar(1e-5))
-        cv.SetIdentity(self.kalman.measurement_noise_cov,
                        cv.RealScalar(1e-1))
+        cv.SetIdentity(self.kalman.measurement_noise_cov,
+                       cv.RealScalar(1e-5))
         cv.SetIdentity(self.kalman.error_cov_post,
                        cv.RealScalar(1))
      

@@ -275,8 +275,10 @@ def features(train_cont,test_cont,last,alpha):
         a2    = area(test_cont[i2])  #area should be prop to d
         d     = numpy.sqrt(numpy.power(x1-x2,2)+numpy.power(y1-y2,2))
         o     = numpy.arctan((y2-y1)/(x2-x1))*180/numpy.pi
-        return [d,o,(x1,y1),(x2,y2),a1,a2] #gives back features
-    else: return last #use this to keep last good values        
+        return [d,o,(x1,y1),(x2,y2),a1,a2,True] #gives back features
+    else:
+        last[6] = False
+        return last #use this to keep last good values        
     
 
 
