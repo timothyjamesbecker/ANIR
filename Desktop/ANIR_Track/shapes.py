@@ -255,7 +255,7 @@ def filter_by_apsect(cont,t_asp,n):
     x = x[0:n]
     return map(lambda z:cont[z],x)
 
-def features(train_cont,test_cont,alpha):
+def features(train_cont,test_cont,last,alpha):
     #get closest matches for the pair
     sim1,sim2 = alpha,alpha #implicit threshold values
     i1,i2 = -1,-1 #indecies of the best matches
@@ -276,8 +276,7 @@ def features(train_cont,test_cont,alpha):
         d     = numpy.sqrt(numpy.power(x1-x2,2)+numpy.power(y1-y2,2))
         o     = numpy.arctan((y2-y1)/(x2-x1))*180/numpy.pi
         return [d,o,(x1,y1),(x2,y2),a1,a2] #gives back features
-    else:
-        return [0,0,(0,0),(0,0),0,0]         
+    else: return last #use this to keep last good values        
     
 
 
