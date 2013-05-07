@@ -7,18 +7,19 @@
 
 #uses the cv2 bindings (exept where noted)
 import cv2
-import numpy
+import numpy as np
 import os
 
 #ANIR Project Sources
 import sources #windowing and video utils
 import filters #modifiers
 import shapes  #shape processing/masking
-import tracker #tracking and smoothing
+import tracker2 #tracking and smoothing
 import perform #performance measures
 
 #base colors
-red,green,blue,black  = (0,0,255),(0,255,0),(255,0,0),(255,255,255)
+red,green,blue,black     = (0,0,255),(0,255,0),(255,0,0),(255,255,255)
+yellow,purple,gray,white = (255,255,0),(200,0,200),(100,100,100),(0,0,0)
 #RT control keys:
 #esc key exits the RT loop (with a variable pause in seconds)
 #number 1 key will write the current frame into the shape1.jpg
@@ -39,7 +40,7 @@ train_c = shapes.contours(train_i)#get the image contours
 #last good features, flag at the end
 last_f = [0,0,(0,0),(0,0),0,0,False] #bool used to keep last f
 #kalman filter on (x,y) point ****************************
-target = tracker.Tracker() #initialize to point (0,0)
+target = tracker2.Tracker() #initialize to point (0,0)
 #kalman filter on (x,y) point ****************************
 #memory = 
 
@@ -77,10 +78,13 @@ while RT and (frame < n): #Real-Time Loop=> 'esc' key turns off
     if(s_f[6]): last_f = s_f
     shapes.draw_contours(im3,cont,green,2) #all contours
     #[4]-----kalman-filter-----------------------[4]
-    pxy = target.run_KF(s_f[2][0],s_f[2][1])
+    pxy = target.run_KF(s_f[2][0],s_f[2][1],
+                        s_f[3][0],s_f[3][1])
     #[4]-----kalman-filter-----------------------[4]
-    shapes.draw_point(im3,(int(pxy[0]),int(pxy[1])),red,2) #centroids of matched
-    shapes.draw_point(im3,s_f[3],red,2) #centroids of matched
+    shapes.draw_point(im3,(pxy[0],pxy[1]),purple,2)
+    shapes.draw_point(im3,(pxy[2],pxy[3]),purple,2)
+    shapes.draw_point(im3,s_f[2],red,8)
+    shapes.draw_point(im3,s_f[3],red,8) 
     values = s_f[0],s_f[1]
     #compute loop:::::::::::::::::::::::::::::::::::::::::::
 

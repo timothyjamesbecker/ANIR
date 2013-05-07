@@ -8,12 +8,15 @@ class Tracker:
     state = np.float32([0.0,0.0]) #this is the unbuffed
     pred  = np.float32([0.0,0.0]) #this is the buffed
 
-    #one kalman filter
+    #kalman filter
     kf         = cv.CreateKalman(4, 2, 0)
     kf_st      = cv.CreateMat(4, 1, cv.CV_32FC1)
     kf_noise   = cv.CreateMat(4, 1, cv.CV_32FC1)
     kf_measure = cv.CreateMat(2, 1, cv.CV_32FC1)
-
+    kf_const   = cv.fromarray(np.float32([[0,0,1,0],
+                                          [0,0,0,1],
+                                          [0,0,0,0],
+                                          [0,0,0,0]]))
     def __init__(self,x=0.0,y=0.0):
         self.state = np.float32([x,y])
         self.pred  = np.float32([0.0,0.0])
@@ -27,8 +30,8 @@ class Tracker:
         # set kalman transition matrix
         cv.SetIdentity(self.kf.transition_matrix,
                        cv.RealScalar(1))
-        self.kf.transition_matrix[0,2] = 1
-        self.kf.transition_matrix[1,3] = 1
+        cv.Add(self.kf.transition_matrix, self.kf_const,
+               self.kf.transition_matrix)
         # set Kalman Filter
         cv.SetIdentity(self.kf.measurement_matrix,
                        cv.RealScalar(1))
