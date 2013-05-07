@@ -1,5 +1,5 @@
 import sys
-import numpy
+import numpy as np
 import cv,cv2
 
 def contours(im):
@@ -33,7 +33,7 @@ def draw_contour(im,cnt,c,t):
     #cnt = the contour to be drawn onto im
     #c = the color
     #t = the thinkness of the line to draw
-    mask = numpy.zeros(im.shape,numpy.uint8)
+    mask = np.zeros(im.shape,np.uint8)
     cv2.drawContours(im,[cnt],0,c,t)
 
 def draw_point(im,(x,y),c,t):
@@ -41,7 +41,7 @@ def draw_point(im,(x,y),c,t):
     #(x,y) = point in 2D space
     #c = color
     #t = line thickness
-    cv2.circle(im,(int(x),int(y)),t,c,2)
+    cv2.circle(im,(np.int32(x),np.int32(y)),t,c,1)
 
 def mrect(cnt):
     #cnt =the contour to find the minimum area bounding rectangle
@@ -54,7 +54,7 @@ def draw_mrect(im,rect,c,t):
     #c = color to draw
     #t = line thickness
     box = cv2.cv.BoxPoints(rect)
-    box = numpy.int0(box)
+    box = np.int0(box)
     cv2.drawContours(im,[box],0,c,t)
     
 def brect(cnt):
@@ -84,7 +84,7 @@ def draw_bcircle(im,cir,c,t):
     #c = color to draw
     #t  = thickness of the line to draw
     #side effect: draws on the window
-    x,y,r = int(cir[0]),int(cir[1]),int(cir[2])
+    x,y,r = np.int32(cir[0]),np.int32(cir[1]),np.int32(cir[2])
     cv2.circle(im,(x,y),r,c,t)
 
 def bellipse(cnt):
@@ -104,7 +104,8 @@ def draw_line(im,pt1,pt2,c,t):
     #fit a line through the ell
     x1,y1 = pt1
     x2,y2 = pt2
-    cv2.line(im,(int(x1),int(y1)),(int(x2),int(y2)),c,t)
+    cv2.line(im,(np.int32(x1),np.int32(y1)),
+                (np.int32(x2),np.int32(y2)),c,t)
 
 def chull(cnt):
     #cnt = one contour
@@ -156,8 +157,8 @@ def aspect_dist(r1,r2):
     #r2 = aspect ratio #2 should be the test
     #returns the minimum geometric distance between the ratios
     #and a 90 degree rotated (w h swapped) set of ratios
-    D1 = numpy.sqrt(pow(r1-float(r2)))
-    D2 = numpy.sqrt(pow(r1-(1/float(r2)),2))
+    D1 = np.sqrt(pow(r1-float(r2)))
+    D2 = np.sqrt(pow(r1-(1/float(r2)),2))
     return min(D1,D2)
 
 def extent(area,rect):
@@ -182,7 +183,7 @@ def solidity(area,hull):
 def eql_diameter(area):
     #returns the diameter of a circle that
     #is equal to the contour area of a shape
-    return numpy.sqrt(4*area/numpy.pi)
+    return np.sqrt(4*area/numpy.pi)
 
 def orientation(rect):
     #rect is a minimum area rectangle
@@ -247,7 +248,7 @@ def filter_by_apsect(cont,t_asp,n):
     #returns only those shapes whose minimum rectangle aspect ratios
     #are within the thr value (also tests the rated version to allow
     #for aspect ratio tests where L & W are swapped)
-    d = numpy.zeros(len(cont))
+    d = np.zeros(len(cont))
     for i in range(0,len(cont)):
         rect = mrect(cont[i])
         d[i] = apect_diff(aspect(rect),t_asp)
@@ -255,7 +256,23 @@ def filter_by_apsect(cont,t_asp,n):
     x = x[0:n]
     return map(lambda z:cont[z],x)
 
-def features(train_cont,test_cont,last,alpha):
+def distance(x1,y1,x2,y2):
+    return np.sqrt(np.power(x1-x2,2)+np.power(y1-y2,2))
+    
+def angle(x1,x2,y1,y2):
+    return np.arctan((y2-y1)/(x2-x1))*180/np.pi
+
+def features(cont):
+    #general purpose centroid an min area rect finder
+    l = []
+    for i in range(0,len(cont)):
+        m = moments(cont[i])
+        x,y = centroid(m)
+        a = area(cont[i])
+        l.append([(x,y),a])
+    return l
+        
+def match_features(train_cont,test_cont,alpha):
     #get closest matches for the pair
     sim1,sim2 = alpha,alpha #implicit threshold values
     i1,i2 = -1,-1 #indecies of the best matches
@@ -273,12 +290,11 @@ def features(train_cont,test_cont,last,alpha):
         x2,y2 = centroid(m2)         #centroid calc
         a1    = area(test_cont[i1])  #area should be prop to d
         a2    = area(test_cont[i2])  #area should be prop to d
-        d     = numpy.sqrt(numpy.power(x1-x2,2)+numpy.power(y1-y2,2))
-        o     = numpy.arctan((y2-y1)/(x2-x1))*180/numpy.pi
-        return [d,o,(x1,y1),(x2,y2),a1,a2,True] #gives back features
+        #d     = np.sqrt(np.power(x1-x2,2)+np.power(y1-y2,2))
+        #o     = np.arctan((y2-y1)/(x2-x1))*180/np.pi
+        return [(x1,y1),(x2,y2),a1,a2,True] #gives back features
     else:
-        last[6] = False
-        return last #use this to keep last good values        
+        return [(0.0,0.0),(0.0,0.0),0.0,0.0,False]        
     
 
 

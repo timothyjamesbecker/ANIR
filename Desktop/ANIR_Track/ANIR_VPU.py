@@ -37,12 +37,10 @@ vin_f = 'Direct_IR950_2x4_TRI.mov' #training video, will update
 source = sources.Sources()
 train_i = source.load(train+'shape1.jpg') #load as GS image
 train_c = shapes.contours(train_i)#get the image contours
-#last good features, flag at the end
-last_f = [0,0,(0,0),(0,0),0,0,False] #bool used to keep last f
-#kalman filter on (x,y) point ****************************
-target = tracker.Tracker() #initialize to point (0,0)
-#kalman filter on (x,y) point ****************************
-#memory = 
+#KF based tracker ****************************************
+#has a circular buffer set to last 15 frames
+target = tracker.Tracker(train_c) #initialize to point (0,0)
+#KF based tracker ****************************************
 
 #new performance CPU measurement object
 p = perform.CPU()
@@ -74,25 +72,24 @@ while RT and (frame < n): #Real-Time Loop=> 'esc' key turns off
     #[2]-----contour filtering-------------------[2]
     cont = shapes.filter_by_area(cont,1000) #remove small shapes fast
     #[3]-----find best shapes--------------------[3]
-    s_f = shapes.features(train_c,cont,last_f,0.1);
-    if(s_f[6]): last_f = s_f
+    s_f = shapes.match_features(train_c,cont,0.1)
     shapes.draw_contours(im3,cont,green,2) #all contours
     #[4]-----kalman-filter-----------------------[4]
-    pxy = target.run_KF(s_f[2][0],s_f[2][1],
-                        s_f[3][0],s_f[3][1])
+    pxy = target.follow(s_f,cont)
     #[4]-----kalman-filter-----------------------[4]
     shapes.draw_point(im3,(pxy[0],pxy[1]),purple,4)
     shapes.draw_point(im3,(pxy[2],pxy[3]),purple,4)
-    shapes.draw_point(im3,s_f[2],red,16)
-    shapes.draw_point(im3,s_f[3],red,16) 
-    values = s_f[0],s_f[1]
+    #redo this section with new history algorithm
+    shapes.draw_point(im3,s_f[0],red,16)
+    shapes.draw_point(im3,s_f[1],red,16) 
+    #values = s_f[0],s_f[1]
     #compute loop:::::::::::::::::::::::::::::::::::::::::::
 
     p.stop()#--------------------performance end---CPU
     #[n]-----diagnostic-text--------------------[n]
     im3 = filters.flip(im3,1) #mirror image
     source.win_diag(im3,frame,p.diff(),len(cont))
-    source.win_message(im3,str(values))
+    #source.win_message(im3,str(values))
 
     #Sentel Loop Control Logic============================
     k = cv2.waitKey(30)           #wait period
