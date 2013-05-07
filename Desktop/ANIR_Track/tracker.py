@@ -12,13 +12,14 @@ class Tracker:
     
     #train and test contour sets (should each have len=2)
     ref_c, targ_c = [],[]          #contours of reference and target
-    h = [(0.0,0.0),(0.0,0.0),0.0,0.0,False] #blank feature
-    ref_f  = h                     #c1, c2, a1, a2 of reference
-    targ_f = h                     #c1, c2, a1, a2 of target
+             #c1, c2, a1, a2 of reference
+    ref_f  = [(0.0,0.0),(0.0,0.0),0.0,0.0,False]
+             #c1, c2, a1, a2 of target
+    targ_f = [(0.0,0.0),(0.0,0.0),0.0,0.0,False]
     ref_d, ref_o = 0.0,0.0         #distance, angle of reference
     targ_d, targ_o   = 0.0,0.0     #distance, angle of target
     #history slots to use as memory
-    hist = [h,h,h,h,h,h,h,h,h,h,h,h,h,h,h] #15 frame history ~0.5 sec
+    hist = [False]*8       #16 frame history ~0.5 sec
     h_len = len(hist)       #fixed history buffer size
     h_w  = 0                #writing index into circular buffer
     h_r  = 1                #reading index into circulat buffer
@@ -162,9 +163,9 @@ class Tracker:
             self.correct_KF()
             self.update_KF(s_f[0][0],s_f[0][1],
                            s_f[1][0],s_f[1][1])
-            self.hist_write(s_f) #this will have a True flag
+            self.hist_write(True) #this will have a True flag
                            
-        else: #use hist[-1] values to update buffer (until run out)
+        else: #use hist values to update buffer (until run out)
             x1 = self.state[0] #last predicted values
             y1 = self.state[1]
             x2 = self.state[2]
@@ -178,20 +179,20 @@ class Tracker:
                 self.predict_KF()
                 self.correct_KF()
                 self.update_KF(c[0][0],c[0][1],c[1][0],c[1][1])
-                self.hist_write(s_f) #this has a False flag
+                self.hist_write(False) #this has a False flag
             
-            elif hist_r[4]: #use hist buffer
-                x1 = hist_r[0][0]
-                y1 = hist_r[0][1]
-                x2 = hist_r[1][0]
-                y2 = hist_r[1][1]
+            elif hist_r: #use hist buffer
+                #x1 = hist_r[0][0]
+                #y1 = hist_r[0][1]
+                #x2 = hist_r[1][0]
+                #y2 = hist_r[1][1]
                 self.set_KF(x1,y1,x2,y2) #use old values
                 self.predict_KF()
                 self.correct_KF()
                 self.update_KF(x1,y1,x2,y2)
-                self.hist_write([(self.state[0],self.state[1]),
-                                (self.state[2],self.state[3]),
-                                0.0,0.0,False]) #update using KF
+                self.hist_write(False) #update using KF
+            elif not all(self.hist):
+                return np.int32([0,0,0,0])
         #return the state
         return self.get_state()
         
