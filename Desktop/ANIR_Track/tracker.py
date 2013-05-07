@@ -25,23 +25,10 @@ class Tracker:
         self.kf.state_pre[2,0]  = self.pred[0]
         self.kf.state_pre[3,0]  = self.pred[1]
         # set kalman transition matrix
-        #self.kf.transition_matrix = trans
-        #self.kf.transition_matrix[0,0] = 1
-        #self.kf.transition_matrix[0,1] = 0
+        cv.SetIdentity(self.kf.transition_matrix,
+                       cv.RealScalar(1))
         self.kf.transition_matrix[0,2] = 1
-        #self.kf.transition_matrix[0,3] = 0
-        #self.kf.transition_matrix[1,0] = 0
-        #self.kf.transition_matrix[1,1] = 1
-        #self.kf.transition_matrix[1,2] = 0
         self.kf.transition_matrix[1,3] = 1
-        #self.kf.transition_matrix[2,0] = 0
-        #self.kf.transition_matrix[2,1] = 0
-        #self.kf.transition_matrix[2,2] = 1
-        #self.kf.transition_matrix[2,3] = 0
-        #self.kf.transition_matrix[3,0] = 0
-        #self.kf.transition_matrix[3,1] = 0
-        #self.kf.transition_matrix[3,2] = 0
-        #self.kf.transition_matrix[3,3] = 1
         # set Kalman Filter
         cv.SetIdentity(self.kf.measurement_matrix,
                        cv.RealScalar(1))
@@ -50,7 +37,7 @@ class Tracker:
         cv.SetIdentity(self.kf.measurement_noise_cov,
                        cv.RealScalar(1e-5))
         cv.SetIdentity(self.kf.error_cov_post,
-                       cv.RealScalar(1e-3))
+                       cv.RealScalar(1))
      
     def predict_KF(self):
         #predict new points
