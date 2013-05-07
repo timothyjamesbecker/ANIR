@@ -9,5 +9,5 @@ class CPU:
         self.t2 = cv2.getTickCount()
         
     def diff(self):
-        return (self.t2-self.t1)/cv2.getTickFrequency()
+        return 1000*(self.t2-self.t1)/cv2.getTickFrequency()
 

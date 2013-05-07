@@ -14,7 +14,7 @@ import os
 import sources #windowing and video utils
 import filters #modifiers
 import shapes  #shape processing/masking
-import tracker2 #tracking and smoothing
+import tracker #tracking and smoothing
 import perform #performance measures
 
 #base colors
@@ -40,7 +40,7 @@ train_c = shapes.contours(train_i)#get the image contours
 #last good features, flag at the end
 last_f = [0,0,(0,0),(0,0),0,0,False] #bool used to keep last f
 #kalman filter on (x,y) point ****************************
-target = tracker2.Tracker() #initialize to point (0,0)
+target = tracker.Tracker() #initialize to point (0,0)
 #kalman filter on (x,y) point ****************************
 #memory = 
 
@@ -81,10 +81,10 @@ while RT and (frame < n): #Real-Time Loop=> 'esc' key turns off
     pxy = target.run_KF(s_f[2][0],s_f[2][1],
                         s_f[3][0],s_f[3][1])
     #[4]-----kalman-filter-----------------------[4]
-    shapes.draw_point(im3,(pxy[0],pxy[1]),purple,2)
-    shapes.draw_point(im3,(pxy[2],pxy[3]),purple,2)
-    shapes.draw_point(im3,s_f[2],red,8)
-    shapes.draw_point(im3,s_f[3],red,8) 
+    shapes.draw_point(im3,(pxy[0],pxy[1]),purple,4)
+    shapes.draw_point(im3,(pxy[2],pxy[3]),purple,4)
+    shapes.draw_point(im3,s_f[2],red,16)
+    shapes.draw_point(im3,s_f[3],red,16) 
     values = s_f[0],s_f[1]
     #compute loop:::::::::::::::::::::::::::::::::::::::::::
 

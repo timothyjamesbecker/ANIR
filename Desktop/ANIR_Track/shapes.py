@@ -41,7 +41,7 @@ def draw_point(im,(x,y),c,t):
     #(x,y) = point in 2D space
     #c = color
     #t = line thickness
-    cv2.circle(im,(int(x),int(y)),t,c,1)
+    cv2.circle(im,(int(x),int(y)),t,c,2)
 
 def mrect(cnt):
     #cnt =the contour to find the minimum area bounding rectangle
