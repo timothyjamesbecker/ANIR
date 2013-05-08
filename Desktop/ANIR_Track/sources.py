@@ -9,6 +9,7 @@ class Sources:
     w_pos = (0,0) #window position
     f_type = cv2.FONT_HERSHEY_SIMPLEX #font type
     capture = 0 #holds the input device video stream pointer
+    writer = 0 #holds the output device video stream pointer
     frames = 0  #max frames for video input
     mode = 0    #0 = webcam, 1 = video/picture
     
@@ -57,6 +58,11 @@ class Sources:
             self.mode = 1
         self.capture.set(cv.CV_CAP_PROP_FRAME_WIDTH,width)
         self.capture.set(cv.CV_CAP_PROP_FRAME_HEIGHT,height)
+
+    def vout(self,width=640,height=480,path=''):
+        self.writer = cv.CreateVideoWriter(path,
+                                           cv.CV_FOURCC('F','L','V','I'),
+                                           30,(width,height),True)                        
             
     def read(self):
         #reads in the next frame from a webcam or video file
@@ -69,9 +75,13 @@ class Sources:
         img = filters.gs(im)
         return filters.thresh(img,200,255)      
     
-    def write(self,im,path):
-        #used to save images as picture files
-        cv2.imwrite(path,im)
+    def write(self,im):
+        bitmap = cv.CreateImageHeader((im.shape[1],im.shape[0]),
+                                      cv.IPL_DEPTH_8U,3)
+        cv.SetData(bitmap, im.tostring(),
+                   im.dtype.itemsize*3*im.shape[1])
+        cv.WriteFrame(self.writer,bitmap)
+        
     
 
 

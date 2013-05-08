@@ -4,9 +4,10 @@
 #A new video viewer opens in the upper left hand screen
 #and runs until the end of the video file, or the user hits 'esc'
 #current experiement has a pair of symbols pre stored in the Train
-#folder as 'shape1.jpg'.  This single keyed instance is then tracked
-#using a tracker instance that employes a KF and buffer to handle
-#moments when matching doesn't succeed
+#folder as 'shape1.jpg'.  A webcam serves as the input stream
+#and filtered, threshold, etc. The keyed instance is then tracked
+#using a tracker instance that employes a KF and buffer to smoothly
+#handle moments when matching doesn't succeed
 
 #uses the cv2 bindings (exept where noted)
 import cv2
@@ -32,7 +33,7 @@ KEY_ESC,KEY_W,KEY_1,KEY_2,KEY_3 = 27,119,49,50,51
 #set video file input and output paths ####################
 path  = '/home/opencv/Desktop/ANIR_Track/' #project path
 train = path+'Train/' 
-out_f = 'OpenCV_Test.mov' #output stream to make demos with
+out_f = path+'OpenCV_Test' #output stream to make demos with
 vin_f = 'Direct_IR950_2x4_TRI.mov' #training video, will update
 #this section will be changed to work with args############
 
@@ -64,7 +65,7 @@ while RT and (frame < n): #Real-Time Loop=> 'esc' key turns off
     im  = filters.gs(im)
     imc = filters.color(im) #used for colors 
     #[1]-----thresholding-----------------------[1]
-    im2 = filters.thresh(im,220,255)
+    im2 = filters.thresh(im,200,255)
     #[1]-----smoothing--------------------------[1]
     im2 = filters.blur(im2,5)
     #[2]-----shape collection-------------------[2]
@@ -72,7 +73,7 @@ while RT and (frame < n): #Real-Time Loop=> 'esc' key turns off
     cont = shapes.contours(im2) #im2 destroyed, now use im4
     ims = filters.white(filters.color(im)) #white color const
     #[2]-----contour filtering-------------------[2]
-    cont = shapes.filter_by_area(cont,1000) #remove small shapes fast
+    cont = shapes.filter_by_area(cont,600) #remove small shapes fast
     #[3]-----find best shapes--------------------[3]
     s_f = shapes.match_features(train_c,cont,0.1) #len(s_f) <= 2
     #[4]-----kalman-filter-----------------------[4]
@@ -91,8 +92,8 @@ while RT and (frame < n): #Real-Time Loop=> 'esc' key turns off
     else:   draw,diag = ims,white #between input+overlay && overlay
     ref = target.get_ref_v()                  #training unit vector
     rl,rx,ry = ref[0], ref[1], ref[2]         #len, x, y of ref uv
-    rx = np.int32(rx*rl)                      #apply magnatude: x
-    ry = np.int32(ry*rl)                      #apply magnatude: y
+    rx = int(rx*rl)                      #apply magnatude: x
+    ry = int(ry*rl)                      #apply magnatude: y
     shapes.draw_contours(draw,cont,green,2)   #Filtered Contours
     shapes.draw_point(draw,s_f[0],red,16)     #Left centroid
     shapes.draw_point(draw,s_f[1],red,16)     #Right centroid

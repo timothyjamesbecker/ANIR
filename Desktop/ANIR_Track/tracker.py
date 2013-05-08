@@ -206,10 +206,6 @@ class Tracker:
                 self.hist_write(False) #this has a False flag
             
             elif hist_r: #use hist buffer
-                #x1 = hist_r[0][0]
-                #y1 = hist_r[0][1]
-                #x2 = hist_r[1][0]
-                #y2 = hist_r[1][1]
                 self.set_KF(x1,y1,x2,y2) #use old values
                 self.predict_KF()
                 self.correct_KF()
