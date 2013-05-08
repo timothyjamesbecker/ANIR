@@ -1,4 +1,7 @@
-import numpy
+#Timothy Becker CSE5095 sources class, version a.2
+#Wrapper class that attaches a camera, video file or picture
+#to the vin function as well as handeling highgui window threads
+import numpy as np
 import cv,cv2
 import filters
 
@@ -37,7 +40,7 @@ class Sources:
 
     def zeros(self,im):
         #convert to gray scale first
-        return numpy.zeros(im.shape,numpy.unint8)
+        return np.zeros(im.shape,np.unint8)
 
     def vin(self,width=640,height=480,path=''):
         #main video input dabstraction
@@ -64,8 +67,7 @@ class Sources:
         #reads in a picture as a image
         im = cv2.imread(path)
         img = filters.gs(im)
-        return filters.thresh(img,200,255)
-        
+        return filters.thresh(img,200,255)      
     
     def write(self,im,path):
         #used to save images as picture files

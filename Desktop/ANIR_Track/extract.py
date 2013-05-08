@@ -1,3 +1,11 @@
+"""
+  Henry Wagner CSE5095
+  image processing and filtering, shape matching and
+  testing environment used to select the best and most
+  functional features to be incorporated into the ANIR_VPU.py
+  Test files are passed as args via the commoand line
+  and display widows are generated using highgui showing results
+"""
 import numpy as np
 import cv2
 import cv

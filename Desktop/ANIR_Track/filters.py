@@ -1,3 +1,8 @@
+#Timothy Becker CSE5095 filters, version a.1
+#wrapper functions for basic color conversions
+#and binary filtering, bluring rotation and mirroring
+#of copencv image data types
+
 import numpy
 import cv,cv2
     

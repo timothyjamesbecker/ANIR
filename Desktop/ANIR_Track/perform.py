@@ -1,3 +1,5 @@
+#Timothy Becker CSE5095
+#basic performance metrics in msec
 import cv2
 
 class CPU:

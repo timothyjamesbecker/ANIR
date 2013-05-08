@@ -1,3 +1,13 @@
+#Timothy Becker CSE5095 tracker class, version a.4
+#this is a tuned and specific tracker that given a reference
+#pair of symbol contours and an input stream of target countours
+#and features uses a circuliar binary buffered KF(2x 2D points)
+#to track the target under dropped signal conditions.  The input
+#feature to follow uses a flag at the end of the list to denote
+#when a match of both pairs has occured which is written into the
+#circuliar buffer which is used to switch modes on the input
+#values for the KF to process the at next time step
+
 import numpy as np
 import cv,cv2
 import shapes
@@ -60,7 +70,10 @@ class Tracker:
         self.pred  = np.float32([0.0,0.0,0.0,0.0])
 
     def get_ref_v(self):
-        return ref_v
+        return self.ref_v
+
+    def get_targ_v(self):
+        return self.targ_v
         
     def hist_write(self,e):
         #updates the circluating history buffer

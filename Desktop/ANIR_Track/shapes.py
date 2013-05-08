@@ -1,3 +1,8 @@
+#Timothy Becker CSE5095 shapes, version a.4
+#Functions for contour extraction, countour filtering,
+#countour drawing, feature calculations, shape matching, and
+#searching for minimally different shapes on an input list
+
 import sys
 import numpy as np
 import cv,cv2
@@ -294,7 +299,7 @@ def match_features(train_cont,test_cont,alpha):
         if(t2 < sim2): sim2,i2 = t2,i
     #check the matches before calc features
     #saves some cycles under conditions of 0-1 match
-    if   i1 >= 0 and i2 >= 0:
+    if i1 >= 0 and i2 >= 0:
         m1   = moments(test_cont[i1])#contour moments
         m2   = moments(test_cont[i2])#contour moments
         x1,y1 = centroid(m1)         #centroid calc
@@ -304,7 +309,7 @@ def match_features(train_cont,test_cont,alpha):
         #d     = np.sqrt(np.power(x1-x2,2)+np.power(y1-y2,2))
         #o     = np.arctan((y2-y1)/(x2-x1))*180/np.pi
         return [(x1,y1),(x2,y2),a1,a2,True] #gives back features
-    else:
+    else: #negative values are used to skip additional drawing steps
         return [(-16.0,-16.0),(-16.0,-16.0),0.0,0.0,False]        
     
 

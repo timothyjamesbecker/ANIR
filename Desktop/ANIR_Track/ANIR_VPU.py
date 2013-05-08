@@ -1,9 +1,12 @@
-#Timothy Becker CSE5095 ANIR VPU
-#this is a template that opens video streams
+#Timothy Becker CSE5095 ANIR VPU, version a.8
+#this is a experimental template that opens video streams
 #and allows testing of Video Processing and Descriptors
-#this can serve as a starting place for both the train/test apps
 #A new video viewer opens in the upper left hand screen
 #and runs until the end of the video file, or the user hits 'esc'
+#current experiement has a pair of symbols pre stored in the Train
+#folder as 'shape1.jpg'.  This single keyed instance is then tracked
+#using a tracker instance that employes a KF and buffer to handle
+#moments when matching doesn't succeed
 
 #uses the cv2 bindings (exept where noted)
 import cv2
@@ -19,7 +22,7 @@ import perform #performance measures
 
 #base colors
 red,green,blue,black     = (0,0,255),(0,255,0),(255,0,0),(255,255,255)
-yellow,purple,gray,white = (255,255,0),(200,0,200),(100,100,100),(0,0,0)
+yellow,purple,gray,white = (0,255,255),(200,0,200),(100,100,100),(0,0,0)
 #RT control keys:
 #esc key exits the RT loop (with a variable pause in seconds)
 #number 1 key will write the current frame into the shape1.jpg
@@ -77,28 +80,37 @@ while RT and (frame < n): #Real-Time Loop=> 'esc' key turns off
     #[4]-----kalman-filter-----------------------[4]
     px,py = np.int32(v[0]),np.int32(v[1])
     qx,qy = np.int32(v[2]),np.int32(v[3])
-    values = (v[4],v[5]) #these are the smoothed scale,angle
+    #these are the smoothed scale,angle
+    values = (v[4],v[5])
     #compute loop:::::::::::::::::::::::::::::::::::::::::::
 
     p.stop()#-----------performance:msec-------CPU
-    #[5]------drawing----------------------------[5]
+    #.......................drawing................................
+    #[1]-----geometry---------------------[1]
     if(IM): draw,diag = imc,black #toggles viewing mode
     else:   draw,diag = ims,white #between input+overlay && overlay
-    shapes.draw_contours(draw,cont,green,2)  #Filtered Contours
-    shapes.draw_point(draw,(px,py),purple,4) #KF Left symbol
-    shapes.draw_point(draw,(qx,qy),purple,4) #KF Right symbol
-    shapes.draw_point(draw,s_f[0],red,16)    #Left centroid
-    shapes.draw_point(draw,s_f[1],red,16)    #Right centroid
-    shapes.draw_line(draw,s_f[1],s_f[0],red,1)
-    shapes.draw_line(draw,(qx,qy),(px,py),purple,1)
-    #[6]-----diagnostic-text---------------------[6]
+    ref = target.get_ref_v()                  #training unit vector
+    rl,rx,ry = ref[0], ref[1], ref[2]         #len, x, y of ref uv
+    rx = np.int32(rx*rl)                      #apply magnatude: x
+    ry = np.int32(ry*rl)                      #apply magnatude: y
+    shapes.draw_contours(draw,cont,green,2)   #Filtered Contours
+    shapes.draw_point(draw,s_f[0],red,16)     #Left centroid
+    shapes.draw_point(draw,s_f[1],red,16)     #Right centroid
+    shapes.draw_line(draw,s_f[1],s_f[0],red,1)#Centroid line
+    shapes.draw_point(draw,(px,py),purple,4)  #KF Left symbol
+    shapes.draw_point(draw,(qx,qy),purple,4)  #KF Right symbol
+    shapes.draw_line(draw,(qx,qy),(px,py),purple,1) #KF line
+    shapes.draw_line(draw,(px+rx,py+ry),(px,py),yellow,1)#ref angle
+    #[2]-----diagnostic text---------------[2]
     draw = filters.flip(draw,1) #mirror image, comment to turn off
     source.win_diag(draw,frame,p.diff(),len(cont),diag)
     source.win_message(draw,str(values),diag)
+    #.......................drawing................................
+    
     #Sentel Loop Control Logic============================
-    k = cv2.waitKey(30)            #wait period
+    k = cv2.waitKey(30)           #wait period => FPS requested
     if k == KEY_ESC: break        #'esc' key exit
-    if k == KEY_W: IM = not IM    #toggle viewimg mode
+    if k == KEY_W: IM = not IM    #toggle viewing mode
     if k == KEY_1:                #'1' key save to shape1
         source.write(imw,train+'shape1.jpg')
         source.win_message(draw,'Shape 1 Written',diag)
