@@ -11,18 +11,18 @@ class Tracker:
     #b  = Boolean flag for a match
     
     #train and test contour sets (should each have len=2)
-    ref_c, targ_c = [],[]          #contours of reference and target
+    ref_c, targ_c = [],[]   #contours of reference and target
              #c1, c2, a1, a2 of reference
     ref_f  = [(0.0,0.0),(0.0,0.0),0.0,0.0,False]
              #c1, c2, a1, a2 of target
     targ_f = [(0.0,0.0),(0.0,0.0),0.0,0.0,False]
-    ref_d, ref_o = 0.0,0.0         #distance, angle of reference
-    targ_d, targ_o   = 0.0,0.0     #distance, angle of target
+    ref_v    = np.float32([0.0,0.0,0.0]) #mag and unit vector
+    targ_v   = np.float32([0.0,0.0,0.0]) #mag and unit vector
     #history slots to use as memory
-    hist = [False]*8       #16 frame history ~0.5 sec
+    hist = [False]*8        #8 frame history ~0.25 sec
     h_len = len(hist)       #fixed history buffer size
     h_w  = 0                #writing index into circular buffer
-    h_r  = 1                #reading index into circulat buffer
+    h_r  = 1                #reading index into circular buffer
     
     #kalman filter variables
     state = np.float32([0.0,0.0,0.0,0.0]) #this is the unbuffed
@@ -47,18 +47,20 @@ class Tracker:
         #use two copies to get the fetaure pair
         self.ref_f = shapes.match_features(train_c,train_c,0.1)
         #get ref distance and angle
-        self.ref_d = shapes.distance(self.ref_f[0][0],
-                                     self.ref_f[0][1],
-                                     self.ref_f[1][0],
-                                     self.ref_f[1][1])
-        self.ref_o = shapes.angle(self.ref_f[0][0],
-                                  self.ref_f[0][1],
-                                  self.ref_f[1][0],
-                                  self.ref_f[1][1])
+        self.ref_v = shapes.unit_vect(self.ref_f[0][0],
+                                      self.ref_f[0][1],
+                                      self.ref_f[1][0],
+                                      self.ref_f[1][1])
         #setup the reference variables---------
         #set KF<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        self.state = np.float32([0.0,0.0,0.0,0.0])
+        self.state = np.float32([self.ref_f[0][0],
+                                 self.ref_f[0][1],
+                                 self.ref_f[1][0],
+                                 self.ref_f[1][1]])
         self.pred  = np.float32([0.0,0.0,0.0,0.0])
+
+    def get_ref_v(self):
+        return ref_v
         
     def hist_write(self,e):
         #updates the circluating history buffer
@@ -89,11 +91,20 @@ class Tracker:
         if i1!=-1 and i2!=-1:
             return [l[i1][0], l[i2][0]]
         else:
-            return [(0.0,0.0),(0.0,0.0)]     
+            return [(0.0,0.0),(0.0,0.0)]
+        
+    def targ_update(self):
+        self.targ_v = shapes.unit_vect(self.state[0],
+                                       self.state[1],
+                                       self.state[2],
+                                       self.state[3])    
     
-    #def distance_diff():
-
-    #def angle_diff():
+    def targ_scale(self):
+        return self.targ_v[0]/self.ref_v[0]
+        
+    def targ_angle(self):
+        return shapes.angle(self.ref_v[1],self.ref_v[2],
+                            self.targ_v[1],self.targ_v[2])
     
     def set_KF(self,x1,y1,x2,y2):
         # set previous state for prediction
@@ -192,9 +203,13 @@ class Tracker:
                 self.update_KF(x1,y1,x2,y2)
                 self.hist_write(False) #update using KF
             elif not all(self.hist):
-                return np.int32([0,0,0,0])
+                self.targ_update()
+                return np.float32([-16,-16,-16,-16,0,0])
         #return the state
-        return self.get_state()
+        self.targ_update()
+        return np.float32([self.state[0],self.state[1],
+                           self.state[2],self.state[3],
+                           self.targ_scale(),self.targ_angle()])
         
     
     

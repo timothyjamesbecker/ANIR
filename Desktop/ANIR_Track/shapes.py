@@ -102,10 +102,12 @@ def draw_bellipse(im,ell,c,t):
 
 def draw_line(im,pt1,pt2,c,t):
     #fit a line through the ell
-    x1,y1 = pt1
-    x2,y2 = pt2
-    cv2.line(im,(np.int32(x1),np.int32(y1)),
-                (np.int32(x2),np.int32(y2)),c,t)
+    sU = np.int32(pt1[0]+t*6.0),np.int32(pt1[1]+t*6.0)
+    sL = np.int32(pt1[0]-t*6.0),np.int32(pt1[1]-t*6.0)
+    x1,y1 = np.int32(pt1)
+    x2,y2 = np.int32(pt2)
+    cv2.rectangle(im,sU,sL,c,t)
+    cv2.line(im,(x1,y1),(x2,y2),c,t)
 
 def chull(cnt):
     #cnt = one contour
@@ -259,8 +261,17 @@ def filter_by_apsect(cont,t_asp,n):
 def distance(x1,y1,x2,y2):
     return np.sqrt(np.power(x1-x2,2)+np.power(y1-y2,2))
     
-def angle(x1,x2,y1,y2):
-    return np.arctan((y2-y1)/(x2-x1))*180/np.pi
+def angle(x1,y1,x2,y2):
+    return cv2.fastAtan2(y2,x2) - cv2.fastAtan2(y1,x1)
+
+def unit_vect(x1,y1,x2,y2):
+    ux,uy = x2-x1,y2-y1
+    l = np.sqrt(np.power(ux,2)+np.power(uy,2))
+    if(l==0.0): return np.float32([0.0,0.0,0.0])
+    else:
+        ux = ux/l
+        uy = uy/l
+        return np.float32([l,ux,uy])
 
 def features(cont):
     #general purpose centroid an min area rect finder
@@ -294,7 +305,7 @@ def match_features(train_cont,test_cont,alpha):
         #o     = np.arctan((y2-y1)/(x2-x1))*180/np.pi
         return [(x1,y1),(x2,y2),a1,a2,True] #gives back features
     else:
-        return [(0.0,0.0),(0.0,0.0),0.0,0.0,False]        
+        return [(-16.0,-16.0),(-16.0,-16.0),0.0,0.0,False]        
     
 
 

@@ -24,7 +24,7 @@ yellow,purple,gray,white = (255,255,0),(200,0,200),(100,100,100),(0,0,0)
 #esc key exits the RT loop (with a variable pause in seconds)
 #number 1 key will write the current frame into the shape1.jpg
 #effectivly allowing the RT system to key new shapes
-KEY_ESC,KEY_1,KEY_2,KEY_3 = 27,49,50,51
+KEY_ESC,KEY_W,KEY_1,KEY_2,KEY_3 = 27,119,49,50,51
 
 #set video file input and output paths ####################
 path  = '/home/opencv/Desktop/ANIR_Track/' #project path
@@ -51,61 +51,66 @@ source.win_start('video_input')
 #captures video files or default webcam = 0
 source.vin(640,480,'')  #leaving the path = '' sets to webcam
 n, m = 1,10 #n=number of max frames, m= a divsor for output
-RT,frame,values = True,0,0
-
+RT,IM,frame,diag = True,True,0,white
 while RT and (frame < n): #Real-Time Loop=> 'esc' key turns off
-    p.start()#----------------performance start---CPU
+    p.start()#-----------performance:msec-------CPU
 
     #compute loop:::::::::::::::::::::::::::::::::::::::::::
     im = source.read() #get one frame
     #[1]-----gray scale conversion--------------[1]
     im  = filters.gs(im)
-    imc = filters.color(im) #used to colors 
+    imc = filters.color(im) #used for colors 
     #[1]-----thresholding-----------------------[1]
     im2 = filters.thresh(im,220,255)
     #[1]-----smoothing--------------------------[1]
     im2 = filters.blur(im2,5)
     #[2]-----shape collection-------------------[2]
-    im4 = im2.copy() #make a deep copy=>cont is destructive
+    imw = im2.copy() #make a deep copy=>cont is destructive
     cont = shapes.contours(im2) #im2 destroyed, now use im4
-    im3 = filters.white(filters.color(im)) #white color const
+    ims = filters.white(filters.color(im)) #white color const
     #[2]-----contour filtering-------------------[2]
     cont = shapes.filter_by_area(cont,1000) #remove small shapes fast
     #[3]-----find best shapes--------------------[3]
-    s_f = shapes.match_features(train_c,cont,0.1)
-    shapes.draw_contours(im3,cont,green,2) #all contours
+    s_f = shapes.match_features(train_c,cont,0.1) #len(s_f) <= 2
     #[4]-----kalman-filter-----------------------[4]
-    pxy = target.follow(s_f,cont)
+    v = target.follow(s_f,cont) #returns smoothed c1,c2,scale,angle
     #[4]-----kalman-filter-----------------------[4]
-    shapes.draw_point(im3,(pxy[0],pxy[1]),purple,4)
-    shapes.draw_point(im3,(pxy[2],pxy[3]),purple,4)
-    #redo this section with new history algorithm
-    shapes.draw_point(im3,s_f[0],red,16)
-    shapes.draw_point(im3,s_f[1],red,16) 
-    #values = s_f[0],s_f[1]
+    px,py = np.int32(v[0]),np.int32(v[1])
+    qx,qy = np.int32(v[2]),np.int32(v[3])
+    values = (v[4],v[5]) #these are the smoothed scale,angle
     #compute loop:::::::::::::::::::::::::::::::::::::::::::
 
-    p.stop()#--------------------performance end---CPU
-    #[n]-----diagnostic-text--------------------[n]
-    im3 = filters.flip(im3,1) #mirror image
-    source.win_diag(im3,frame,p.diff(),len(cont))
-    #source.win_message(im3,str(values))
-
+    p.stop()#-----------performance:msec-------CPU
+    #[5]------drawing----------------------------[5]
+    if(IM): draw,diag = imc,black #toggles viewing mode
+    else:   draw,diag = ims,white #between input+overlay && overlay
+    shapes.draw_contours(draw,cont,green,2)  #Filtered Contours
+    shapes.draw_point(draw,(px,py),purple,4) #KF Left symbol
+    shapes.draw_point(draw,(qx,qy),purple,4) #KF Right symbol
+    shapes.draw_point(draw,s_f[0],red,16)    #Left centroid
+    shapes.draw_point(draw,s_f[1],red,16)    #Right centroid
+    shapes.draw_line(draw,s_f[1],s_f[0],red,1)
+    shapes.draw_line(draw,(qx,qy),(px,py),purple,1)
+    #[6]-----diagnostic-text---------------------[6]
+    draw = filters.flip(draw,1) #mirror image, comment to turn off
+    source.win_diag(draw,frame,p.diff(),len(cont),diag)
+    source.win_message(draw,str(values),diag)
     #Sentel Loop Control Logic============================
-    k = cv2.waitKey(30)           #wait period
+    k = cv2.waitKey(30)            #wait period
     if k == KEY_ESC: break        #'esc' key exit
+    if k == KEY_W: IM = not IM    #toggle viewimg mode
     if k == KEY_1:                #'1' key save to shape1
-        source.write(im4,train+'shape1.jpg')
-        source.win_message(im3,'Shape 1 Written')
+        source.write(imw,train+'shape1.jpg')
+        source.win_message(draw,'Shape 1 Written',diag)
     if k == KEY_2:                #'2' key save to shape1
-        source.write(im4,train+'shape2.jpg')
-        source.win_message(im3,'Shape 2 Written')
+        source.write(imw,train+'shape2.jpg')
+        source.win_message(draw,'Shape 2 Written',diag)
     if k == KEY_3:                #'3' key save to shape1
-        source.write(im4,train+'shape2.jpg')
-        source.win_message(im3,'Shape 3 Written')
+        source.write(imw,train+'shape2.jpg')
+        source.win_message(draw,'Shape 3 Written',diag)
         
-    source.win_print('video_input',im3) #display output
-    frame+=1 #update the frame counter (for video only)
+    source.win_print('video_input',draw) #display output
+    frame = (frame+1)%31          #update the frame counter
     if(source.mode == 0): n+=1    #take out frame + n for video
     #Sentel Loop Control Logic============================
     

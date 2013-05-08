@@ -18,15 +18,15 @@ class Sources:
     def win_print(self,name,im):
         cv2.imshow(name,im) #display output
     
-    def win_diag(self,im,f,p,o):
+    def win_diag(self,im,f,p,o,c):
         #f = frame#, p = CPU in msec, o = object#
-        cv2.putText(im,str(f),(10,30),self.f_type,1,0,1,1)
-        cv2.putText(im,str(p),(10,50),self.f_type,0.5,0,1,1)
-        cv2.putText(im,str(o),(10,70),self.f_type,0.5,0,1,1)
+        cv2.putText(im,str(f),(10,30),self.f_type,1,c)
+        cv2.putText(im,str(p),(10,50),self.f_type,0.5,c)
+        cv2.putText(im,str(o),(10,70),self.f_type,0.5,c)
 
-    def win_message(self,im,t):
+    def win_message(self,im,t,c):
         #output a temp message
-        cv2.putText(im,t,(10,90),self.f_type,0.5,0,1,1)
+        cv2.putText(im,t,(10,90),self.f_type,0.5,c)
 
     def win_stop(self,name,hold):
         #closes the capture device, stops threads and then window
